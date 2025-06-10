@@ -12,9 +12,12 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+    name = Column(String)
     email = Column(String, unique=True, index=True)
     password = Column(String)
+    spotify_access_token = Column(String, nullable=True)
+    spotify_refresh_token = Column(String, nullable=True)
+    spotify_token_expires_at = Column(Integer, nullable=True)
 
     subscriptions = relationship("Subscription", back_populates="user")
 

@@ -3,11 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import engine
 import models
-from routers import user_auth
+from routers import user_auth, spotify_auth
 
 app = FastAPI()
 
 app.include_router(user_auth.router)
+app.include_router(spotify_auth.router)
 
 app.add_middleware(
     CORSMiddleware,
