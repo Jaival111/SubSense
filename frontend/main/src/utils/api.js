@@ -24,3 +24,5 @@ export const fetchWithAuth = async (endpoint, options = {}) => {
     
     return response;
 };
+
+export { API_BASE_URL };

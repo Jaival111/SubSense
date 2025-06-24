@@ -5,7 +5,7 @@ import Card from 'react-bootstrap/Card';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { useState, useEffect } from 'react';
-import { fetchWithAuth } from '../utils/api';
+import { API_BASE_URL, fetchWithAuth } from '../utils/api';
 
 function HomePage() {
   const { user, setUser } = useAuth();
@@ -23,8 +23,18 @@ function HomePage() {
       }
     };
 
+    const checkStatus = async () => {
+      const res = await fetchWithAuth('/api/spotify/status');
+      const status = await res.json();
+      if (status.connected) {
+        fetchSpotifyProfile();
+      } else {
+        setSpotifyProfile(null);
+      }
+    };
+
     if (user) {
-      fetchSpotifyProfile();
+      checkStatus();
     }
   }, [user]);
 
@@ -49,15 +59,8 @@ function HomePage() {
   }, [setUser]);
 
   const handleLogin = () => {
-    const width = 450;
-    const height = 730;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-    window.open(
-      'http://localhost:8000/api/spotify/login',
-      'Spotify Login',
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
+    const jwtToken = localStorage.getItem("access_token");
+    window.location.href = `${API_BASE_URL}/api/spotify/login?token=${jwtToken}`;
   };
 
   if (!user) {
@@ -97,9 +100,9 @@ function HomePage() {
               ) : (
                 <div className="text-center">
                   {spotifyProfile.images && spotifyProfile.images[0] && (
-                    <img 
-                      src={spotifyProfile.images[0].url} 
-                      alt="Profile" 
+                    <img
+                      src={spotifyProfile.images[0].url}
+                      alt="Profile"
                       className="rounded-circle mb-3"
                       style={{ width: '150px', height: '150px' }}
                     />
@@ -107,8 +110,8 @@ function HomePage() {
                   <h4>{spotifyProfile.display_name}</h4>
                   <p className="text-muted">{spotifyProfile.email}</p>
                   <p className="text-muted">Followers: {spotifyProfile.followers?.total || 0}</p>
-                  <Button 
-                    variant="outline-danger" 
+                  <Button
+                    variant="outline-danger"
                     className="mt-3"
                     onClick={async () => {
                       try {
