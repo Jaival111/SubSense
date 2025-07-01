@@ -4,63 +4,101 @@ import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import { useState, useEffect } from 'react';
-import { API_BASE_URL, fetchWithAuth } from '../utils/api';
+import { useState, useEffect, useRef } from 'react';
+import { fetchWithAuth } from '../utils/api';
+import SpotifySubscriptionModal from '../components/SpotifySubscriptionModal';
 
 function HomePage() {
   const { user, setUser } = useAuth();
   const [spotifyProfile, setSpotifyProfile] = useState(null);
   const [error, setError] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const hasCheckedPendingSubscription = useRef(false);
+  const hasFetchedSpotifyProfile = useRef(false);
 
-  useEffect(() => {
-    const fetchSpotifyProfile = async () => {
-      try {
-        const response = await fetchWithAuth('/api/spotify/profile');
-        const data = await response.json();
-        setSpotifyProfile(data);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
+  const fetchSpotifyData = async () => {
+    try {
+      const statusRes = await fetchWithAuth('/api/spotify/status');
+      const status = await statusRes.json();
 
-    const checkStatus = async () => {
-      const res = await fetchWithAuth('/api/spotify/status');
-      const status = await res.json();
       if (status.connected) {
-        fetchSpotifyProfile();
+        const profileRes = await fetchWithAuth('/api/spotify/profile');
+        const profileData = await profileRes.json();
+        setSpotifyProfile(profileData);
       } else {
         setSpotifyProfile(null);
       }
-    };
+    } catch (err) {
+      setError(err.message);
+      setSpotifyProfile(null);
+    }
+  };
 
-    if (user) {
-      checkStatus();
+  useEffect(() => {
+    if (user && !hasFetchedSpotifyProfile.current) {
+      hasFetchedSpotifyProfile.current = true;
+      fetchSpotifyData();
     }
   }, [user]);
 
   useEffect(() => {
-    const handleSpotifyAuth = (event) => {
+    const handleSpotifyAuth = async (event) => {
       if (event.data.type === 'spotify-auth-success') {
         localStorage.setItem('access_token', event.data.token);
-        // Fetch user data after successful login
-        fetchWithAuth('/me')
-          .then(response => response.json())
-          .then(userData => {
-            setUser(userData);
-          })
-          .catch(err => {
-            setError(err.message);
-          });
+
+        try {
+          const userResponse = await fetchWithAuth('/me');
+          const userData = await userResponse.json();
+          setUser(userData);
+        } catch (err) {
+          setError(err.message);
+        }
       }
     };
 
+    const checkPendingSubscription = async () => {
+      if (
+        !hasCheckedPendingSubscription.current &&
+        localStorage.getItem('pending_spotify_subscription')
+      ) {
+        hasCheckedPendingSubscription.current = true;
+
+        try {
+          const response = await fetchWithAuth('/api/spotify/connect-with-subscription', {
+            method: 'POST',
+            body: localStorage.getItem('pending_spotify_subscription'),
+          });
+
+          if (response.ok) {
+            localStorage.removeItem('pending_spotify_subscription');
+          }
+        } catch (err) {
+          setError(err.message);
+          localStorage.removeItem('pending_spotify_subscription');
+        }
+      }
+    };
+
+    checkPendingSubscription();
+
     window.addEventListener('message', handleSpotifyAuth);
+
     return () => window.removeEventListener('message', handleSpotifyAuth);
   }, [setUser]);
 
   const handleLogin = () => {
-    const jwtToken = localStorage.getItem("access_token");
-    window.location.href = `${API_BASE_URL}/api/spotify/login?token=${jwtToken}`;
+    setShowModal(true);
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await fetchWithAuth('/api/spotify/disconnect', {
+        method: 'POST'
+      });
+      setSpotifyProfile(null);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   if (!user) {
@@ -85,8 +123,8 @@ function HomePage() {
       </Row>
 
       <Row className="mb-4">
-        <Col md={6}>
-          <Card className="shadow-sm h-100">
+        <Col>
+          <Card className="shadow-sm">
             <Card.Body>
               <Card.Title>Spotify Connection</Card.Title>
               {error && <div className="alert alert-danger">{error}</div>}
@@ -113,16 +151,7 @@ function HomePage() {
                   <Button
                     variant="outline-danger"
                     className="mt-3"
-                    onClick={async () => {
-                      try {
-                        await fetchWithAuth('/api/spotify/disconnect', {
-                          method: 'POST'
-                        });
-                        setSpotifyProfile(null);
-                      } catch (err) {
-                        setError(err.message);
-                      }
-                    }}
+                    onClick={handleDisconnect}
                   >
                     Disconnect Spotify
                   </Button>
@@ -131,19 +160,12 @@ function HomePage() {
             </Card.Body>
           </Card>
         </Col>
-
-        <Col md={6}>
-          <Card className="shadow-sm h-100">
-            <Card.Body>
-              <Card.Title>Your Subscriptions</Card.Title>
-              <div className="text-center py-4">
-                <p className="text-muted">No active subscriptions yet</p>
-                <Button variant="outline-dark">Add Subscription</Button>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
       </Row>
+
+      <SpotifySubscriptionModal
+        show={showModal}
+        onHide={() => setShowModal(false)}
+      />
     </Container>
   );
 }

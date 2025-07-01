@@ -8,6 +8,10 @@ from database import SessionLocal
 from dotenv import load_dotenv
 import os
 import base64
+from datetime import datetime
+from models import BillingCycle
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import atexit
 load_dotenv()
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
@@ -24,6 +28,26 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+
+async def refresh_spotify_token(user, db):
+    token_url = "https://accounts.spotify.com/api/token"
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": user.spotify_refresh_token,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET
+    }
+    async with httpx.AsyncClient() as client:
+        response = await client.post(token_url, data=data)
+        token_data = response.json()
+        if "access_token" in token_data:
+            user.spotify_access_token = token_data["access_token"]
+            user.spotify_refresh_token = token_data["refresh_token"]
+            user.spotify_token_expires_at = token_data["expires_in"]
+            db.commit()
+            return user.spotify_access_token
+        else:
+            raise HTTPException(status_code=401, detail="Failed to refresh Spotify token")
 
 @router.get("/login")
 def login(token: str):
@@ -81,6 +105,7 @@ async def callback(request: Request, db: db_dependency):
         # Get access token
         response = await client.post(token_url, data=data)
         token_data = response.json()
+        # print(token_data.keys())
         
         if "error" in token_data:
             raise HTTPException(status_code=400, detail="Failed to get access token")
@@ -124,11 +149,38 @@ async def get_profile(db: db_dependency, current_user: models.User = Depends(aut
         headers = {"Authorization": f"Bearer {current_user.spotify_access_token}"}
         response = await client.get("https://api.spotify.com/v1/me", headers=headers)
         if response.status_code == 401:  # Token expired
-            # Implement token refresh logic here
-            raise HTTPException(status_code=401, detail="Token expired")
-        
+            try:
+                new_token = await refresh_spotify_token(current_user, db)
+                headers = {"Authorization": f"Bearer {new_token}"}
+                response = await client.get("https://api.spotify.com/v1/me", headers=headers)
+            except Exception:
+                raise HTTPException(status_code=401, detail="Token expired and refresh failed")
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to fetch profile")
         profile_data = response.json()
         return profile_data
+    
+
+@router.get("/recently-played")
+async def get_recently_played(db: db_dependency, current_user: models.User = Depends(auth.get_current_user)):
+    if not current_user.spotify_access_token:
+        raise HTTPException(status_code=400, detail="Spotify not connected")
+    
+    async with httpx.AsyncClient() as client:
+        headers = {"Authorization": f"Bearer {current_user.spotify_access_token}"}
+        response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
+        if response.status_code == 401:  # Token expired
+            try:
+                new_token = await refresh_spotify_token(current_user, db)
+                headers = {"Authorization": f"Bearer {new_token}"}
+                response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
+            except Exception:
+                raise HTTPException(status_code=401, detail="Token expired and refresh failed")
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to fetch recently played tracks")
+        recently_played_data = response.json()
+        return recently_played_data
+
 
 @router.post("/disconnect")
 async def disconnect_spotify(db: db_dependency, current_user: models.User = Depends(auth.get_current_user)):
@@ -147,3 +199,77 @@ async def disconnect_spotify(db: db_dependency, current_user: models.User = Depe
 @router.get("/status")
 async def spotify_status(current_user: models.User = Depends(auth.get_current_user)):
     return {"connected": current_user.spotify_access_token is not None}
+
+@router.post("/connect-with-subscription")
+async def connect_with_subscription(
+    subscription_data: dict,
+    db: db_dependency,
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    """
+    Connect to Spotify and create a subscription in one request.
+    This endpoint expects a POST request with subscription data.
+    """
+    # First, check if user is already connected to Spotify
+    if not current_user.spotify_access_token:
+        raise HTTPException(status_code=400, detail="Please connect to Spotify first")
+    
+    try:
+        # Parse dates from ISO format
+        start_date = datetime.fromisoformat(subscription_data.get("start_date")).date()
+        next_billing_date = datetime.fromisoformat(subscription_data.get("next_billing_date")).date()
+
+        db_subscription = models.Subscription(
+            user_id=current_user.id,
+            app_name=subscription_data.get("app_name", "Spotify"),
+            cost=float(subscription_data.get("cost", 0)),
+            billing_cycle=BillingCycle(subscription_data.get("billing_cycle", "monthly")),
+            start_date=start_date,
+            next_billing_date=next_billing_date,
+            is_active=1
+        )
+        db.add(db_subscription)
+        db.commit()
+        db.refresh(db_subscription)
+        
+        return {
+            "message": "Spotify connected and subscription created successfully",
+            "subscription": {
+                "id": db_subscription.id,
+                "app_name": db_subscription.app_name,
+                "cost": db_subscription.cost,
+                "billing_cycle": db_subscription.billing_cycle.value,
+                "start_date": db_subscription.start_date.isoformat(),
+                "next_billing_date": db_subscription.next_billing_date.isoformat()
+            }
+        }
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Failed to create subscription: {str(e)}")
+
+async def fetch_recently_played_for_all_users():
+    db: Session = SessionLocal()
+    try:
+        users = db.query(models.User).filter(models.User.spotify_access_token.isnot(None)).all()
+        for user in users:
+            try:
+                headers = {"Authorization": f"Bearer {user.spotify_access_token}"}
+                async with httpx.AsyncClient() as client:
+                    response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
+                    if response.status_code == 401:
+                        # Token expired, refresh
+                        new_token = await refresh_spotify_token(user, db)
+                        headers = {"Authorization": f"Bearer {new_token}"}
+                        response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
+                    if response.status_code == 200:
+                        print(f"Fetched recently played for {user.email}")
+            except Exception as e:
+                print(f"Failed for {user.email}: {e}")
+    finally:
+        db.close()
+
+scheduler = AsyncIOScheduler()
+scheduler.add_job(fetch_recently_played_for_all_users, 'interval', days=1)
+scheduler.start()
+
+atexit.register(lambda: scheduler.shutdown())
