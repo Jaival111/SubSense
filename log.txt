@@ -1,1 +1,0 @@
-next task: implement the logic of fetching the user activity using recently played tracks api.
