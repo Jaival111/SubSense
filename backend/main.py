@@ -4,8 +4,18 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from database import engine
 import models
 from routers import user_auth, spotify_auth
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    from routers.spotify_auth import scheduler
+    scheduler.start()
+    yield
+    # Shutdown
+    scheduler.shutdown()
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(user_auth.router)
 app.include_router(spotify_auth.router)

@@ -8,10 +8,9 @@ from database import SessionLocal
 from dotenv import load_dotenv
 import os
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from models import BillingCycle
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
 load_dotenv()
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
@@ -48,6 +47,26 @@ async def refresh_spotify_token(user, db):
             return user.spotify_access_token
         else:
             raise HTTPException(status_code=401, detail="Failed to refresh Spotify token")
+
+def refresh_spotify_token_sync(user, db):
+    token_url = "https://accounts.spotify.com/api/token"
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": user.spotify_refresh_token,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET
+    }
+    with httpx.Client() as client:
+        response = client.post(token_url, data=data)
+        token_data = response.json()
+        if "access_token" in token_data:
+            user.spotify_access_token = token_data["access_token"]
+            user.spotify_refresh_token = token_data["refresh_token"]
+            user.spotify_token_expires_at = token_data["expires_in"]
+            db.commit()
+            return user.spotify_access_token
+        else:
+            raise Exception("Failed to refresh Spotify token")
 
 @router.get("/login")
 def login(token: str):
@@ -247,29 +266,45 @@ async def connect_with_subscription(
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to create subscription: {str(e)}")
 
-async def fetch_recently_played_for_all_users():
+def fetch_recently_played_for_all_users():
     db: Session = SessionLocal()
     try:
         users = db.query(models.User).filter(models.User.spotify_access_token.isnot(None)).all()
+        today = datetime.now().date()
         for user in users:
             try:
                 headers = {"Authorization": f"Bearer {user.spotify_access_token}"}
-                async with httpx.AsyncClient() as client:
-                    response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
-                    if response.status_code == 401:
-                        # Token expired, refresh
-                        new_token = await refresh_spotify_token(user, db)
+                with httpx.Client() as client:
+                    yesterday = datetime.now() - timedelta(days=1)
+                    timestamp = int(yesterday.timestamp() * 1000)
+                    response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
+                    if response.status_code == 401:  # Token expired, refresh
+                        new_token = refresh_spotify_token_sync(user, db)
                         headers = {"Authorization": f"Bearer {new_token}"}
-                        response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
+                        response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
                     if response.status_code == 200:
-                        print(f"Fetched recently played for {user.email}")
+                        data = response.json()
+                        tracks_today = 0
+                        for item in data.get("items", []):
+                            played_at = item.get("played_at")
+                            if played_at:
+                                played_date = datetime.fromisoformat(played_at.replace('Z', '+00:00')).date()
+                                if played_date == today:
+                                    tracks_today += 1
+
+                        usage_stats = models.AppUsageStats(
+                            user_id=user.id,
+                            app_name="Spotify",
+                            date=today,
+                            is_active=False if tracks_today == 0 else True,
+                            total_usage=tracks_today
+                        )
+                        db.add(usage_stats)
+                        db.commit()
             except Exception as e:
-                print(f"Failed for {user.email}: {e}")
+                print(f"Error fetching recently played for user {user.email}: {str(e)}")
     finally:
         db.close()
 
-scheduler = AsyncIOScheduler()
+scheduler = BackgroundScheduler()
 scheduler.add_job(fetch_recently_played_for_all_users, 'interval', days=1)
-scheduler.start()
-
-atexit.register(lambda: scheduler.shutdown())

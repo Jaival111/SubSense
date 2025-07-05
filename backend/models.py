@@ -53,3 +53,15 @@ class Notification(Base):
     message = Column(String)
     created_at = Column(DateTime, default=datetime.now)
     is_read = Column(Boolean, default=False)
+
+class AppUsageStats(Base):
+    __tablename__ = "app_usage_stats"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    app_name = Column(String)
+    date = Column(Date)
+    is_active = Column(Boolean, default=False)
+    total_usage = Column(Integer, default=0)
+
+    user = relationship("User")
