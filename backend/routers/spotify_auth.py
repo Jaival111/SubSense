@@ -12,6 +12,9 @@ from datetime import datetime, timedelta
 from models import BillingCycle
 load_dotenv()
 
+import logging
+logger = logging.getLogger(__name__)
+
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
@@ -128,7 +131,6 @@ async def callback(request: Request, db: db_dependency):
         # Get access token
         response = await client.post(token_url, data=data)
         token_data = response.json()
-        # print(token_data.keys())
         
         if "error" in token_data:
             raise HTTPException(status_code=400, detail="Failed to get access token")
@@ -265,9 +267,12 @@ def fetch_recently_played_for_all_users():
                     timestamp = int(yesterday.timestamp() * 1000)
                     response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
                     if response.status_code == 401:  # Token expired, refresh
-                        new_token = refresh_spotify_token_sync(user, db)
-                        headers = {"Authorization": f"Bearer {new_token}"}
-                        response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
+                        try:
+                            new_token = refresh_spotify_token_sync(user, db)
+                            headers = {"Authorization": f"Bearer {new_token}"}
+                            response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
+                        except Exception as e:
+                            logger.error(f"Error refreshing token for user {user.email}: {str(e)}")
                     if response.status_code == 200:
                         data = response.json()
                         tracks_today = 0
@@ -285,10 +290,12 @@ def fetch_recently_played_for_all_users():
                             is_active=False if tracks_today == 0 else True,
                             total_usage=tracks_today
                         )
-                        db.add(usage_stats)
-                        db.commit()
+                        existing = db.query(models.AppUsageStats).filter_by(user_id=user.id, app_name="Spotify", date=today).first()
+                        if not existing:
+                            db.add(usage_stats)
+                            db.commit()
             except Exception as e:
-                print(f"Error fetching recently played for user {user.email}: {str(e)}")
+                logger.error(f"Error fetching recently played for user {user.email}: {str(e)}")
     finally:
         db.close()
 
