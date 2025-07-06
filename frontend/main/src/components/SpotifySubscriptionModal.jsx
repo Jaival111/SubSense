@@ -3,6 +3,17 @@ import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import { API_BASE_URL } from '../utils/api';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faDollarSign, 
+  faCalendarAlt, 
+  faCreditCard,
+  faTimes,
+  faLink
+} from '@fortawesome/free-solid-svg-icons';
+import { faSpotify } from '@fortawesome/free-brands-svg-icons';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
 const SpotifySubscriptionModal = ({ show, onHide }) => {
   const [formData, setFormData] = useState({
@@ -59,68 +70,234 @@ const SpotifySubscriptionModal = ({ show, onHide }) => {
   };
 
   return (
-    <Modal show={show} onHide={handleClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Connect Spotify & Add Subscription</Modal.Title>
+    <Modal 
+      show={show} 
+      onHide={handleClose} 
+      centered
+      size="lg"
+      style={{
+        backdropFilter: 'blur(5px)'
+      }}
+    >
+      <Modal.Header 
+        closeButton 
+        style={{
+          borderBottom: '1px solid var(--gray-200)',
+          padding: 'var(--spacing-xl)',
+          backgroundColor: 'var(--bg-primary)'
+        }}
+      >
+        <div className="d-flex align-items-center">
+          <div style={{
+            width: '48px',
+            height: '48px',
+            backgroundColor: '#1DB954',
+            borderRadius: 'var(--radius-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 'var(--spacing-md)'
+          }}>
+            <FontAwesomeIcon icon={faSpotify} style={{ color: 'white', fontSize: '1.5rem' }} />
+          </div>
+          <div>
+            <Modal.Title style={{ 
+              margin: 0, 
+              fontSize: '1.5rem', 
+              fontWeight: '600',
+              color: 'var(--text-primary)'
+            }}>
+              Connect Spotify & Add Subscription
+            </Modal.Title>
+            <p style={{ 
+              margin: 'var(--spacing-xs) 0 0 0', 
+              color: 'var(--text-secondary)',
+              fontSize: '0.95rem'
+            }}>
+              Link your account and set up subscription tracking
+            </p>
+          </div>
+        </div>
       </Modal.Header>
-      <Modal.Body>
-        {error && <div className="alert alert-danger">{error}</div>}
+      
+      <Modal.Body style={{ padding: 'var(--spacing-xl)' }}>
+        {error && (
+          <div className="alert alert-danger mb-4" style={{
+            borderRadius: 'var(--radius-lg)',
+            border: 'none',
+            backgroundColor: 'var(--danger-color)',
+            color: 'white',
+            padding: 'var(--spacing-md)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-sm)'
+          }}>
+            <FontAwesomeIcon icon={faTimes} />
+            {error}
+          </div>
+        )}
+        
         <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
-            <Form.Label>Subscription Type</Form.Label>
-            <Form.Select
-              name="subscription_type"
-              value={formData.subscription_type}
-              onChange={handleChange}
-              required
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-4">
+                <Form.Label style={{
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  marginBottom: 'var(--spacing-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-sm)'
+                }}>
+                  <FontAwesomeIcon icon={faCreditCard} style={{ color: 'var(--primary-color)' }} />
+                  Subscription Type
+                </Form.Label>
+                <Form.Select
+                  name="subscription_type"
+                  value={formData.subscription_type}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    padding: 'var(--spacing-md)',
+                    borderRadius: 'var(--radius-lg)',
+                    border: '2px solid var(--gray-200)',
+                    fontSize: '1rem',
+                    transition: 'all var(--transition-fast)',
+                    backgroundColor: 'var(--bg-primary)'
+                  }}
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </Form.Select>
+              </Form.Group>
+            </Col>
+            
+            <Col md={6}>
+              <Form.Group className="mb-4">
+                <Form.Label style={{
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  marginBottom: 'var(--spacing-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-sm)'
+                }}>
+                  <FontAwesomeIcon icon={faDollarSign} style={{ color: 'var(--success-color)' }} />
+                  Subscription Price ($)
+                </Form.Label>
+                <div className="input-icon-wrapper">
+                  <FontAwesomeIcon icon={faDollarSign} className="input-icon" />
+                  <Form.Control
+                    type="number"
+                    name="subscription_price"
+                    value={formData.subscription_price}
+                    onChange={handleChange}
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-4">
+                <Form.Label style={{
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  marginBottom: 'var(--spacing-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-sm)'
+                }}>
+                  <FontAwesomeIcon icon={faCalendarAlt} style={{ color: 'var(--accent-color)' }} />
+                  Start Date
+                </Form.Label>
+                <div className="input-icon-wrapper">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="input-icon" />
+                  <Form.Control
+                    type="date"
+                    name="start_date"
+                    value={formData.start_date}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </Form.Group>
+            </Col>
+            
+            <Col md={6}>
+              <Form.Group className="mb-4">
+                <Form.Label style={{
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                  marginBottom: 'var(--spacing-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--spacing-sm)'
+                }}>
+                  <FontAwesomeIcon icon={faCalendarAlt} style={{ color: 'var(--primary-color)' }} />
+                  Next Billing Date
+                </Form.Label>
+                <div className="input-icon-wrapper">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="input-icon" />
+                  <Form.Control
+                    type="date"
+                    name="renewal_date"
+                    value={formData.renewal_date}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <div className="d-flex justify-content-end gap-3 mt-4">
+            <Button 
+              variant="outline-secondary" 
+              onClick={handleClose}
+              style={{
+                borderColor: 'var(--gray-300)',
+                color: 'var(--text-secondary)',
+                padding: 'var(--spacing-md) var(--spacing-xl)',
+                borderRadius: 'var(--radius-lg)',
+                fontWeight: '500',
+                transition: 'all var(--transition-fast)'
+              }}
             >
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </Form.Select>
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Subscription Price ($)</Form.Label>
-            <Form.Control
-              type="number"
-              name="subscription_price"
-              value={formData.subscription_price}
-              onChange={handleChange}
-              step="0.01"
-              min="0"
-              placeholder="Enter price"
-              required
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Start Date</Form.Label>
-            <Form.Control
-              type="date"
-              name="start_date"
-              value={formData.start_date}
-              onChange={handleChange}
-              required
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Next Billing Date</Form.Label>
-            <Form.Control
-              type="date"
-              name="renewal_date"
-              value={formData.renewal_date}
-              onChange={handleChange}
-              required
-            />
-          </Form.Group>
-
-          <div className="d-flex justify-content-end gap-2">
-            <Button variant="secondary" onClick={handleClose}>
               Cancel
             </Button>
-            <Button variant="dark" type="submit" disabled={loading}>
-              {loading ? 'Connecting...' : 'Connect & Add Subscription'}
+            <Button 
+              variant="primary" 
+              type="submit" 
+              disabled={loading}
+              style={{
+                backgroundColor: '#1DB954',
+                border: 'none',
+                padding: 'var(--spacing-md) var(--spacing-xl)',
+                borderRadius: 'var(--radius-lg)',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--spacing-sm)',
+                transition: 'all var(--transition-fast)'
+              }}
+            >
+              {loading ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faLink} />
+                  Connect & Add Subscription
+                </>
+              )}
             </Button>
           </div>
         </Form>

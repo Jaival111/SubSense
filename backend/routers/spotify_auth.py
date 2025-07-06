@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks, Header
 from fastapi.responses import RedirectResponse, HTMLResponse
 import httpx
 import models, auth
@@ -10,12 +10,12 @@ import os
 import base64
 from datetime import datetime, timedelta
 from models import BillingCycle
-from apscheduler.schedulers.background import BackgroundScheduler
 load_dotenv()
 
 CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
+CRON_SECRET = os.getenv("CRON_SECRET")
 
 router = APIRouter(prefix="/api/spotify", tags=["spotify"])
 
@@ -27,6 +27,7 @@ def get_db():
         db.close()
 
 db_dependency = Annotated[Session, Depends(get_db)]
+
 
 async def refresh_spotify_token(user, db):
     token_url = "https://accounts.spotify.com/api/token"
@@ -47,6 +48,7 @@ async def refresh_spotify_token(user, db):
             return user.spotify_access_token
         else:
             raise HTTPException(status_code=401, detail="Failed to refresh Spotify token")
+        
 
 def refresh_spotify_token_sync(user, db):
     token_url = "https://accounts.spotify.com/api/token"
@@ -67,6 +69,7 @@ def refresh_spotify_token_sync(user, db):
             return user.spotify_access_token
         else:
             raise Exception("Failed to refresh Spotify token")
+        
 
 @router.get("/login")
 def login(token: str):
@@ -81,6 +84,7 @@ def login(token: str):
         f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type=code&redirect_uri={REDIRECT_URI}&scope={scope}&state={encoded_state}"
     )
     return RedirectResponse(auth_url)
+
 
 @router.get("/callback")
 async def callback(request: Request, db: db_dependency):
@@ -178,27 +182,6 @@ async def get_profile(db: db_dependency, current_user: models.User = Depends(aut
             raise HTTPException(status_code=response.status_code, detail="Failed to fetch profile")
         profile_data = response.json()
         return profile_data
-    
-
-@router.get("/recently-played")
-async def get_recently_played(db: db_dependency, current_user: models.User = Depends(auth.get_current_user)):
-    if not current_user.spotify_access_token:
-        raise HTTPException(status_code=400, detail="Spotify not connected")
-    
-    async with httpx.AsyncClient() as client:
-        headers = {"Authorization": f"Bearer {current_user.spotify_access_token}"}
-        response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
-        if response.status_code == 401:  # Token expired
-            try:
-                new_token = await refresh_spotify_token(current_user, db)
-                headers = {"Authorization": f"Bearer {new_token}"}
-                response = await client.get("https://api.spotify.com/v1/me/player/recently-played", headers=headers)
-            except Exception:
-                raise HTTPException(status_code=401, detail="Token expired and refresh failed")
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail="Failed to fetch recently played tracks")
-        recently_played_data = response.json()
-        return recently_played_data
 
 
 @router.post("/disconnect")
@@ -215,9 +198,11 @@ async def disconnect_spotify(db: db_dependency, current_user: models.User = Depe
     
     return {"message": "Successfully disconnected from Spotify"}
 
+
 @router.get("/status")
 async def spotify_status(current_user: models.User = Depends(auth.get_current_user)):
     return {"connected": current_user.spotify_access_token is not None}
+
 
 @router.post("/connect-with-subscription")
 async def connect_with_subscription(
@@ -265,6 +250,7 @@ async def connect_with_subscription(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=400, detail=f"Failed to create subscription: {str(e)}")
+    
 
 def fetch_recently_played_for_all_users():
     db: Session = SessionLocal()
@@ -306,5 +292,12 @@ def fetch_recently_played_for_all_users():
     finally:
         db.close()
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(fetch_recently_played_for_all_users, 'interval', days=1)
+
+@router.post("/fetch-recently-played")
+def fetch_recently_played(background_tasks: BackgroundTasks, x_api_key: str = Header(...)):
+    if x_api_key != CRON_SECRET:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    background_tasks.add_task(fetch_recently_played_for_all_users)
+    return {"message": "Background task started to fetch recently played tracks for all users."}
+
