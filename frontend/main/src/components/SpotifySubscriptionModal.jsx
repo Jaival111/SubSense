@@ -5,7 +5,7 @@ import Button from 'react-bootstrap/Button';
 import { API_BASE_URL } from '../utils/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faDollarSign, 
+  faIndianRupeeSign, 
   faCalendarAlt, 
   faCreditCard,
   faTimes,
@@ -182,11 +182,11 @@ const SpotifySubscriptionModal = ({ show, onHide }) => {
                   alignItems: 'center',
                   gap: 'var(--spacing-sm)'
                 }}>
-                  <FontAwesomeIcon icon={faDollarSign} style={{ color: 'var(--success-color)' }} />
-                  Subscription Price ($)
+                  <FontAwesomeIcon icon={faIndianRupeeSign} style={{ color: 'var(--success-color)' }} />
+                  Subscription Price (₹)
                 </Form.Label>
                 <div className="input-icon-wrapper">
-                  <FontAwesomeIcon icon={faDollarSign} className="input-icon" />
+                  <FontAwesomeIcon icon={faIndianRupeeSign} className="input-icon" />
                   <Form.Control
                     type="number"
                     name="subscription_price"
