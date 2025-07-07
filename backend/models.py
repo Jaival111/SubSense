@@ -19,6 +19,7 @@ class User(Base):
     spotify_token_expires_at = Column(Integer, nullable=True)
 
     subscriptions = relationship("Subscription", back_populates="user")
+    app_usage_stats = relationship("AppUsageStats", back_populates="user")
 
 class Subscription(Base):
     __tablename__ = "subscriptions"
@@ -30,19 +31,21 @@ class Subscription(Base):
     billing_cycle = Column(Enum(BillingCycle))
     start_date = Column(Date)
     next_billing_date = Column(Date)
-    is_active = Column(Integer, default=1)  # 1 = active, 0 = inactive
+    is_active = Column(Integer, default=1)
 
     user = relationship("User", back_populates="subscriptions")
-    usage = relationship("AppUsage", back_populates="subscription", cascade="all, delete-orphan")
+    usage = relationship("AppUsageStats", back_populates="subscription", cascade="all, delete-orphan")
 
 class AppUsageStats(Base):
     __tablename__ = "app_usage_stats"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
+    subscription_id = Column(Integer, ForeignKey("subscriptions.id"))
     app_name = Column(String)
     date = Column(Date)
     is_active = Column(Boolean, default=False)
     total_usage = Column(Integer, default=0)
 
-    user = relationship("User")
+    user = relationship("User", back_populates="app_usage_stats")
+    subscription = relationship("Subscription", back_populates="usage")
