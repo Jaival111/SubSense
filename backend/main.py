@@ -10,9 +10,15 @@ app = FastAPI()
 app.include_router(user_auth.router)
 app.include_router(spotify_auth.router)
 
+origins = [
+    "https://subsense.vercel.app",
+    "https://subsense.vercel.app/login",
+    "https://subsense.vercel.app/signup"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://subsense.vercel.app"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
