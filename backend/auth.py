@@ -27,8 +27,8 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(input_password, db_password):
+    return input_password == db_password
 
 def get_password_hash(password):
     return pwd_context.hash(password)
