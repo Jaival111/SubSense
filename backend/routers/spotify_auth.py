@@ -156,7 +156,7 @@ async def callback(request: Request, db: db_dependency):
                         }}, '*');
                         window.close();
                     }} else {{
-                        window.location.href = 'http://localhost:3000';
+                        window.location.href = 'https://subsense.vercel.app';
                     }}
                 </script>
             </body>
