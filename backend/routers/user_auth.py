@@ -21,11 +21,10 @@ def signup(user: schemas.UserCreate, db: db_dependency):
     if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    hashed_password = auth.get_password_hash(user.password)
     new_user = models.User(
         name = user.name,
         email = user.email,
-        password = hashed_password
+        password = user.password
     )
     db.add(new_user)
     db.commit()
