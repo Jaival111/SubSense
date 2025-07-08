@@ -32,6 +32,7 @@ class Subscription(Base):
     start_date = Column(Date)
     next_billing_date = Column(Date)
     is_active = Column(Integer, default=1)
+    should_omit = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="subscriptions")
     usage = relationship("AppUsageStats", back_populates="subscription", cascade="all, delete-orphan")

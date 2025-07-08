@@ -9,7 +9,11 @@ from dotenv import load_dotenv
 import os
 import base64
 from datetime import datetime, timedelta
+import urllib.parse
 from models import BillingCycle
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 load_dotenv()
 
 import logging
@@ -19,6 +23,9 @@ CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 CRON_SECRET = os.getenv("CRON_SECRET")
+GMAIL_USER = os.getenv("GMAIL_USER")
+GMAIL_PASS = os.getenv("GMAIL_PASS")
+RENEW_SUB_URL = os.getenv("RENEW_SUB_URL")
 
 router = APIRouter(prefix="/api/spotify", tags=["spotify"])
 
@@ -40,12 +47,14 @@ async def refresh_spotify_token(user, db):
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET
     }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
     async with httpx.AsyncClient() as client:
-        response = await client.post(token_url, data=data)
+        response = await client.post(token_url, data=urllib.parse.urlencode(data), headers=headers)
         token_data = response.json()
         if "access_token" in token_data:
             user.spotify_access_token = token_data["access_token"]
-            user.spotify_refresh_token = token_data["refresh_token"]
+            if "refresh_token" in token_data:
+                user.spotify_refresh_token = token_data["refresh_token"]
             user.spotify_token_expires_at = token_data["expires_in"]
             db.commit()
             return user.spotify_access_token
@@ -61,12 +70,14 @@ def refresh_spotify_token_sync(user, db):
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET
     }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
     with httpx.Client() as client:
-        response = client.post(token_url, data=data)
+        response = client.post(token_url, data=urllib.parse.urlencode(data), headers=headers)
         token_data = response.json()
         if "access_token" in token_data:
             user.spotify_access_token = token_data["access_token"]
-            user.spotify_refresh_token = token_data["refresh_token"]
+            if "refresh_token" in token_data:
+                user.spotify_refresh_token = token_data["refresh_token"]
             user.spotify_token_expires_at = token_data["expires_in"]
             db.commit()
             return user.spotify_access_token
@@ -232,7 +243,8 @@ async def connect_with_subscription(
             billing_cycle=BillingCycle(subscription_data.get("billing_cycle", "monthly")),
             start_date=start_date,
             next_billing_date=next_billing_date,
-            is_active=1
+            is_active=1,
+            should_omit=True
         )
         db.add(db_subscription)
         db.commit()
@@ -254,6 +266,43 @@ async def connect_with_subscription(
         raise HTTPException(status_code=400, detail=f"Failed to create subscription: {str(e)}")
     
 
+@router.get("/renew-subscription")
+async def renew_subscription(email: str, db: db_dependency):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        return HTMLResponse("User not found", status_code=404)
+    subscription = db.query(models.Subscription).filter_by(user_id=user.id, app_name="Spotify").order_by(models.Subscription.id.desc()).first()
+    if not subscription:
+        return HTMLResponse("Spotify subscription not found", status_code=404)
+    subscription.should_omit = False
+    db.commit()
+    return RedirectResponse("https://subsense.vercel.app")
+    
+
+def send_renewal_email(user_email, user_name=None):
+    link = f"{RENEW_SUB_URL}?email={user_email}"
+    body = f"""
+    Hi{f' {user_name}' if user_name else ''},<br><br>
+    Your Spotify subscription is due for renewal today.<br>
+    If you wish to continue using Spotify with our service, please <a href='{link}'>reconnect your Spotify account</a>.<br><br>
+    If you do not reconnect, your Spotify integration will remain disconnected.<br><br>
+    Thank you!<br>
+    Team SubSense.
+    """
+    msg = MIMEMultipart()
+    msg['From'] = GMAIL_USER
+    msg['To'] = user_email
+    msg['Subject'] = "Spotify Subscription Renewal Confirmation"
+    msg.attach(MIMEText(body, 'html'))
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(GMAIL_USER, GMAIL_PASS)
+            server.sendmail(GMAIL_USER, user_email, msg.as_string())
+        logger.info(f"Renewal email sent to {user_email}")
+    except Exception as e:
+        logger.error(f"Failed to send renewal email to {user_email}: {str(e)}")
+
+
 def fetch_recently_played_for_all_users():
     db: Session = SessionLocal()
     try:
@@ -261,39 +310,53 @@ def fetch_recently_played_for_all_users():
         today = datetime.now().date()
         for user in users:
             try:
-                headers = {"Authorization": f"Bearer {user.spotify_access_token}"}
-                with httpx.Client() as client:
-                    yesterday = datetime.now() - timedelta(days=1)
-                    timestamp = int(yesterday.timestamp() * 1000)
-                    response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
-                    if response.status_code == 401:  # Token expired, refresh
-                        try:
-                            new_token = refresh_spotify_token_sync(user, db)
-                            headers = {"Authorization": f"Bearer {new_token}"}
-                            response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
-                        except Exception as e:
-                            logger.error(f"Error refreshing token for user {user.email}: {str(e)}")
-                    if response.status_code == 200:
-                        data = response.json()
-                        tracks_today = 0
-                        for item in data.get("items", []):
-                            played_at = item.get("played_at")
-                            if played_at:
-                                played_date = datetime.fromisoformat(played_at.replace('Z', '+00:00')).date()
-                                if played_date == today:
-                                    tracks_today += 1
+                # Check for Spotify subscription renewal
+                subscription = db.query(models.Subscription).filter_by(user_id=user.id, app_name="Spotify", is_active=True).first()
+                if subscription and subscription.next_billing_date == today:
+                    # Mark subscription as inactive
+                    subscription.is_active = 0
+                    # Disconnect Spotify
+                    user.spotify_access_token = None
+                    user.spotify_refresh_token = None
+                    user.spotify_token_expires_at = None
+                    db.commit()
+                    # Send renewal email
+                    send_renewal_email(user.email, getattr(user, 'name', None))
+                    logger.info(f"Processed renewal for user {user.email}")
+                headers = {"Authorization": f"Bearer {user.spotify_access_token}"} if user.spotify_access_token else None
+                if headers:
+                    with httpx.Client() as client:
+                        yesterday = datetime.now() - timedelta(days=1)
+                        timestamp = int(yesterday.timestamp() * 1000)
+                        response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
+                        if response.status_code == 401:  # Token expired, refresh
+                            try:
+                                new_token = refresh_spotify_token_sync(user, db)
+                                headers = {"Authorization": f"Bearer {new_token}"}
+                                response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
+                            except Exception as e:
+                                logger.error(f"Error refreshing token for user {user.email}: {str(e)}")
+                        if response.status_code == 200:
+                            data = response.json()
+                            tracks_today = 0
+                            for item in data.get("items", []):
+                                played_at = item.get("played_at")
+                                if played_at:
+                                    played_date = datetime.fromisoformat(played_at.replace('Z', '+00:00')).date()
+                                    if played_date == today:
+                                        tracks_today += 1
 
-                        usage_stats = models.AppUsageStats(
-                            user_id=user.id,
-                            app_name="Spotify",
-                            date=today,
-                            is_active=False if tracks_today == 0 else True,
-                            total_usage=tracks_today
-                        )
-                        existing = db.query(models.AppUsageStats).filter_by(user_id=user.id, app_name="Spotify", date=today).first()
-                        if not existing:
-                            db.add(usage_stats)
-                            db.commit()
+                            usage_stats = models.AppUsageStats(
+                                user_id=user.id,
+                                app_name="Spotify",
+                                date=today,
+                                is_active=False if tracks_today == 0 else True,
+                                total_usage=tracks_today
+                            )
+                            existing = db.query(models.AppUsageStats).filter_by(user_id=user.id, app_name="Spotify", date=today).first()
+                            if not existing:
+                                db.add(usage_stats)
+                                db.commit()
             except Exception as e:
                 logger.error(f"Error fetching recently played for user {user.email}: {str(e)}")
     finally:
