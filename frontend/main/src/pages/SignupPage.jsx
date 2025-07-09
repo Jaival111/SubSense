@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchWithAuth } from '../utils/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faUserPlus, faIdCard } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faUserPlus, faIdCard, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 function SignupPage() {
     const navigate = useNavigate();
@@ -18,6 +18,8 @@ function SignupPage() {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [formErrors, setFormErrors] = useState({ email: '', password: '' });
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -25,11 +27,43 @@ function SignupPage() {
             ...prevState,
             [name]: value
         }));
+
+        if (name === 'email') {
+            if (!validateEmail(value)) {
+                setFormErrors(prev => ({ ...prev, email: 'Please enter a valid email address.' }));
+            } else {
+                setFormErrors(prev => ({ ...prev, email: '' }));
+            }
+        }
+        if (name === 'password') {
+            if (!validatePassword(value)) {
+                setFormErrors(prev => ({ ...prev, password: 'Password must be at least 8 characters long and contain at least one letter and one number.' }));
+            } else {
+                setFormErrors(prev => ({ ...prev, password: '' }));
+            }
+        }
+    };
+
+    const validateEmail = (email) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
+
+    const validatePassword = (password) => {
+        return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!validateEmail(formData.email)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
+        if (!validatePassword(formData.password)) {
+            setError('Password must be at least 8 characters long and contain at least one letter and one number.');
+            return;
+        }
         setLoading(true);
 
         try {
@@ -166,8 +200,14 @@ function SignupPage() {
                                 onChange={handleChange}
                                 required
                                 placeholder="Enter your email"
+                                isInvalid={!!formErrors.email}
                             />
                         </div>
+                        {formErrors.email && (
+                            <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+                                {formErrors.email}
+                            </Form.Control.Feedback>
+                        )}
                         <Form.Text style={{ 
                             color: 'var(--text-tertiary)', 
                             fontSize: '0.875rem',
@@ -185,24 +225,47 @@ function SignupPage() {
                         }}>
                             Password
                         </Form.Label>
-                        <div className="input-icon-wrapper">
-                            <FontAwesomeIcon icon={faLock} className="input-icon" />
+                        <div className="input-icon-wrapper" style={{ position: 'relative' }}>
+                            <span
+                                onClick={() => setShowPassword((prev) => !prev)}
+                                style={{
+                                    position: 'absolute',
+                                    left: '12px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    cursor: 'pointer',
+                                    color: 'var(--text-tertiary)',
+                                    zIndex: 2
+                                }}
+                                tabIndex={0}
+                                role="button"
+                                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                            </span>
                             <Form.Control 
-                                type="password" 
+                                type={showPassword ? 'text' : 'password'}
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
                                 required
                                 placeholder="Create a strong password"
+                                isInvalid={!!formErrors.password}
                             />
+                            
                         </div>
+                        {formErrors.password && (
+                            <Form.Control.Feedback type="invalid" style={{ display: 'block' }}>
+                                {formErrors.password}
+                            </Form.Control.Feedback>
+                        )}
                     </Form.Group>
 
                     <Button 
                         variant="primary" 
                         type="submit" 
                         className="w-100 mb-4"
-                        disabled={loading}
+                        disabled={loading || !!formErrors.email || !!formErrors.password || !formData.email || !formData.password || !formData.name}
                         style={{
                             backgroundColor: 'var(--secondary-color)',
                             border: 'none',

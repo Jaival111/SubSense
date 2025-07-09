@@ -17,6 +17,7 @@ function LoginPage() {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [formErrors, setFormErrors] = useState({ email: '' });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -24,11 +25,28 @@ function LoginPage() {
             ...prevState,
             [name]: value
         }));
+
+        if (name === 'email') {
+            if (!validateEmail(value)) {
+                setFormErrors(prev => ({ ...prev, email: 'Please enter a valid email address.' }));
+            } else {
+                setFormErrors(prev => ({ ...prev, email: '' }));
+            }
+        }
+    };
+
+    const validateEmail = (email) => {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (!validateEmail(formData.email)) {
+            setError('Please enter a valid email address.');
+            return;
+        }
         setLoading(true);
 
         try {
@@ -134,8 +152,14 @@ function LoginPage() {
                                 onChange={handleChange}
                                 required
                                 placeholder="Enter your email"
+                                isInvalid={!!formErrors.email}
                             />
                         </div>
+                        {formErrors.email && (
+                            <div style={{ color: 'var(--danger-color)', fontSize: '0.95rem', marginTop: 4 }}>
+                                {formErrors.email}
+                            </div>
+                        )}
                     </Form.Group>
 
                     <Form.Group className="mb-4">
@@ -163,7 +187,7 @@ function LoginPage() {
                         variant="primary" 
                         type="submit" 
                         className="w-100 mb-4"
-                        disabled={loading}
+                        disabled={loading || !!formErrors.email || !formData.email || !formData.password}
                         style={{
                             backgroundColor: 'var(--primary-color)',
                             border: 'none',

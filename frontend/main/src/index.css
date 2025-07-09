@@ -301,6 +301,14 @@ p {
   }
 }
 
+@media (max-width: 1000px) {
+  .spotify-flex-col {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+}
+
 /* Loading States */
 .loading {
   opacity: 0.6;
