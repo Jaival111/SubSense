@@ -59,21 +59,19 @@ function NavComponent() {
                         gap: 'var(--spacing-sm)'
                     }}
                 >
-                    <div style={{
-                        width: '32px',
-                        height: '32px',
-                        backgroundColor: 'var(--primary-color)',
+                    <img src="/logo-home.png" alt='logo' style={{
+                        width: '50px',
+                        height: '50px',
                         borderRadius: 'var(--radius-md)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: 'white',
-                        fontSize: '1.2rem',
-                        fontWeight: 'bold'
-                    }}>
-                        S
-                    </div>
-                    SubSense
+                    }} />
+                    <img src="/logo-text.svg" alt="SubSense" style={{
+                        width: 'auto',
+                        height: '50px',
+                        marginLeft: 'var(--spacing-sm)'
+                    }} />
                 </Navbar.Brand>
                 
                 <Navbar.Toggle 

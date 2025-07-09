@@ -123,23 +123,17 @@ function HomePage() {
           background: 'linear-gradient(135deg, var(--bg-primary) 0%, var(--gray-50) 100%)'
         }}>
           <Card.Body>
-            <div style={{
-              width: '80px',
-              height: '80px',
-              backgroundColor: 'var(--primary-color)',
+            <img src="/logo-home.png" alt="SubSense" style={{
+              width: '100px',
+              height: '100px',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto var(--spacing-xl)',
-              color: 'white',
-              fontSize: '2rem',
-              fontWeight: 'bold'
-            }}>
-              S
-            </div>
+            }} />
             <h1 className="mb-3" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>
-              Welcome to SubSense
+              Welcome to <span style={{ color: 'var(--primary-dark)' }}>SubSense</span>
             </h1>
             <p className="lead mb-4" style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
               Your intelligent subscription management platform
