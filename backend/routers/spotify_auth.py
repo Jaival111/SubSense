@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 import os
 import base64
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import urllib.parse
 from models import BillingCycle
 import smtplib
@@ -307,7 +308,7 @@ def fetch_recently_played_for_all_users():
     db: Session = SessionLocal()
     try:
         users = db.query(models.User).filter(models.User.spotify_access_token.isnot(None)).all()
-        today = datetime.now().date()
+        today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
         for user in users:
             try:
                 # Check for Spotify subscription renewal
@@ -326,7 +327,7 @@ def fetch_recently_played_for_all_users():
                 headers = {"Authorization": f"Bearer {user.spotify_access_token}"} if user.spotify_access_token else None
                 if headers:
                     with httpx.Client() as client:
-                        yesterday = datetime.now() - timedelta(days=1)
+                        yesterday = datetime.now(ZoneInfo("Asia/Kolkata")) - timedelta(days=1)
                         timestamp = int(yesterday.timestamp() * 1000)
                         response = client.get(f"https://api.spotify.com/v1/me/player/recently-played?after={timestamp}", headers=headers)
                         if response.status_code == 401:  # Token expired, refresh
@@ -348,6 +349,7 @@ def fetch_recently_played_for_all_users():
 
                             usage_stats = models.AppUsageStats(
                                 user_id=user.id,
+                                subscription_id=subscription.id if subscription else None,
                                 app_name="Spotify",
                                 date=today,
                                 is_active=False if tracks_today == 0 else True,

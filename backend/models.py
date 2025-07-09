@@ -49,4 +49,4 @@ class AppUsageStats(Base):
     total_usage = Column(Integer, default=0)
 
     user = relationship("User", back_populates="app_usage_stats")
-    subscription = relationship("Subscription", back_populates="usage")
+    subscription = relationship("Subscription", back_populates="app_usage_stats")
