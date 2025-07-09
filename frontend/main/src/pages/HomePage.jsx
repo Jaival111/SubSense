@@ -250,12 +250,11 @@ function HomePage() {
                 </div>
               ) : (
                 <div className="spotify-flex-col d-flex flex-column flex-md-row align-items-center justify-content-between">
-                  <div className='d-flex flex-column flex-md-row align-items-center justify-content-center mb-3 mb-md-0'>
+                  <div className='d-flex align-items-center justify-content-center mb-3 mb-md-0'>
                     <div>
                       <FontAwesomeIcon icon={faSpotify} style={{ color: '#1DB954', fontSize: '4rem', margin: '1rem'
                        }} />
                     </div>
-
                     <h3 style={{ fontWeight: '600', margin: '1rem 0' }}>
                       {spotifyProfile.display_name}
                     </h3>
