@@ -340,12 +340,17 @@ def fetch_recently_played_for_all_users():
                         if response.status_code == 200:
                             data = response.json()
                             tracks_today = 0
-                            for item in data.get("items", []):
-                                played_at = item.get("played_at")
-                                if played_at:
-                                    played_date = datetime.fromisoformat(played_at.replace('Z', '+00:00')).date()
-                                    if played_date == today:
-                                        tracks_today += 1
+                            while True:
+                                for item in data.get("items", []):
+                                    tracks_today += 1
+                                next_url = data.get("next")
+                                if not next_url:
+                                    break
+                                response = client.get(next_url, headers=headers)
+                                if response.status_code != 200:
+                                    logger.error(f"Error fetching next page for user {user.email}: {response.text}")
+                                    break
+                                data = response.json()
 
                             usage_stats = models.AppUsageStats(
                                 user_id=user.id,
