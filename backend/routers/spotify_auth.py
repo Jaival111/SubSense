@@ -311,7 +311,7 @@ def fetch_recently_played_for_all_users():
         for user in users:
             try:
                 # Check for Spotify subscription renewal
-                subscription = db.query(models.Subscription).filter_by(user_id=user.id, app_name="Spotify", is_active=True).first()
+                subscription = db.query(models.Subscription).filter_by(user_id=user.id, app_name="Spotify", is_active=1).first()
                 if subscription and subscription.next_billing_date == today:
                     # Mark subscription as inactive
                     subscription.is_active = 0
