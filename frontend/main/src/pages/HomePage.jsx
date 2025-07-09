@@ -215,22 +215,32 @@ function HomePage() {
                   <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
                 </div>
               ) : !spotifyProfile ? (
-                <div className='d-flex align-items-center justify-content-between'>
-                  <div className='d-flex align-items-center'>
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      backgroundColor: '#1DB954',
-                      borderRadius: 'var(--radius-lg)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 'var(--spacing-md)'
-                    }}>
+                <div className="d-flex flex-column flex-md-row align-items-center justify-content-between text-center text-md-start">
+                  <div className="d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0">
+                    <div
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: '#1DB954',
+                        borderRadius: 'var(--radius-lg)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: '1rem',
+                        marginRight: 'var(--spacing-md)',
+                      }}
+                      className="mx-auto mx-md-0"
+                    >
                       <FontAwesomeIcon icon={faSpotify} style={{ color: 'white', fontSize: '1.5rem' }} />
                     </div>
                     <div>
-                      <Card.Title style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600' }}>
+                      <Card.Title
+                        style={{
+                          margin: 0,
+                          fontSize: '1.5rem',
+                          fontWeight: '600',
+                        }}
+                      >
                         Connect Your Spotify Account
                       </Card.Title>
                       <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
@@ -238,40 +248,47 @@ function HomePage() {
                       </p>
                     </div>
                   </div>
+
                   <Button
                     variant="dark"
                     onClick={handleLogin}
                     size="lg"
+                    className="w-100 w-md-auto"
                     style={{
                       backgroundColor: '#1DB954',
                       border: 'none',
                       padding: 'var(--spacing-md) var(--spacing-2xl)',
                       borderRadius: 'var(--radius-lg)',
                       fontWeight: '600',
-                      fontSize: '1.1rem'
+                      fontSize: '1.1rem',
                     }}
                   >
                     <FontAwesomeIcon icon={faLink} className="me-2" />
                     Connect to Spotify
                   </Button>
                 </div>
+
               ) : (
-                <div className="d-flex align-items-center justify-content-between">
-                  <div className='d-flex align-items-center justify-content-center'>
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      backgroundColor: '#1DB954',
-                      borderRadius: 'var(--radius-lg)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginRight: 'var(--spacing-md)'
-                    }}>
+                <div className="d-flex flex-column flex-md-row align-items-center justify-content-between text-center text-md-start">
+                  <div className="d-flex flex-column flex-md-row align-items-center justify-content-center mb-3 mb-md-0">
+                    <div
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: '#1DB954',
+                        borderRadius: 'var(--radius-lg)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: '1rem',
+                        marginRight: 'var(--spacing-md)',
+                      }}
+                      className="mx-auto mx-md-0"
+                    >
                       <FontAwesomeIcon icon={faSpotify} style={{ color: 'white', fontSize: '1.5rem' }} />
                     </div>
 
-                    <h3 className="mb-2" style={{ fontWeight: '600' }}>
+                    <h3 className="mb-0" style={{ fontWeight: '600' }}>
                       {spotifyProfile.display_name}
                     </h3>
                   </div>
@@ -280,18 +297,20 @@ function HomePage() {
                     variant="outline-danger"
                     onClick={handleDisconnect}
                     disabled={loading}
+                    className="w-100 w-md-auto"
                     style={{
                       borderColor: 'var(--danger-color)',
                       color: 'var(--danger-color)',
                       padding: 'var(--spacing-sm) var(--spacing-xl)',
                       borderRadius: 'var(--radius-lg)',
-                      fontWeight: '500'
+                      fontWeight: '500',
                     }}
                   >
                     <FontAwesomeIcon icon={faUnlink} className="me-2" />
                     {loading ? 'Disconnecting...' : 'Disconnect Spotify'}
                   </Button>
                 </div>
+
               )}
             </Card.Body>
           </Card>
