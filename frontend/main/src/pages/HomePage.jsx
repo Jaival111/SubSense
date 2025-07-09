@@ -177,8 +177,8 @@ function HomePage() {
             color: 'white',
             textAlign: 'center'
           }}>
-            <h1 className="mb-3" style={{ fontWeight: '700' }}>
-              Welcome back, {user.name}! 👋
+            <h1 className="mb-3" style={{ fontWeight: '700', color: 'white' }}>
+              Welcome back, {user.name}!👋
             </h1>
             <p style={{ fontSize: '1.1rem', opacity: 0.9, marginBottom: 0, color: 'white' }}>
               Manage your subscriptions and track your spending with ease
@@ -215,7 +215,7 @@ function HomePage() {
                   <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
                 </div>
               ) : !spotifyProfile ? (
-                <div className="d-flex flex-column flex-md-row align-items-center justify-content-between">
+                <div className="spotify-flex-col d-flex flex-column flex-md-row align-items-center justify-content-between">
                   <div className='d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0'>
                     <div>
                       <FontAwesomeIcon icon={faSpotify} style={{ color: '#1DB954', fontSize: '4rem', margin: '1rem'
@@ -249,14 +249,14 @@ function HomePage() {
                   </Button>
                 </div>
               ) : (
-                <div className="d-flex flex-column flex-md-row align-items-center justify-content-between">
+                <div className="spotify-flex-col d-flex flex-column flex-md-row align-items-center justify-content-between">
                   <div className='d-flex flex-column flex-md-row align-items-center justify-content-center mb-3 mb-md-0'>
                     <div>
                       <FontAwesomeIcon icon={faSpotify} style={{ color: '#1DB954', fontSize: '4rem', margin: '1rem'
                        }} />
                     </div>
 
-                    <h3 style={{ fontWeight: '600' }}>
+                    <h3 style={{ fontWeight: '600', margin: '1rem 0' }}>
                       {spotifyProfile.display_name}
                     </h3>
                   </div>
