@@ -130,7 +130,7 @@ function HomePage() {
         {/* Animated Gradient Background */}
         <div style={gradientStyle}></div>
         {/* Main Content */}
-        <Container className="d-flex justify-content-center align-items-center fade-in" style={{ minHeight: '80vh' }}>
+        <Container className="d-flex justify-content-center align-items-center fade-in mt-5" style={{ minHeight: '80vh' }}>
           <Card className="welcome-card text-center" style={{
             maxWidth: '500px',
             padding: 'var(--spacing-3xl)',
