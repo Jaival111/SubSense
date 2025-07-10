@@ -235,8 +235,9 @@ function HomePage() {
                   <div className="spotify-flex-col d-flex flex-column flex-md-row align-items-center justify-content-between">
                     <div className='d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0'>
                       <div>
-                        <FontAwesomeIcon icon={faSpotify} style={{ color: '#1DB954', fontSize: '4rem', margin: '1rem'
-                         }} />
+                        <FontAwesomeIcon icon={faSpotify} style={{
+                          color: '#1DB954', fontSize: '4rem', margin: '1rem'
+                        }} />
                       </div>
                       <div className='text-center text-md-start'>
                         <Card.Title style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600' }}>
@@ -269,8 +270,9 @@ function HomePage() {
                   <div className="spotify-flex-col d-flex flex-column flex-md-row align-items-center justify-content-between">
                     <div className='d-flex align-items-center justify-content-center mb-3 mb-md-0'>
                       <div>
-                        <FontAwesomeIcon icon={faSpotify} style={{ color: '#1DB954', fontSize: '4rem', margin: '1rem'
-                         }} />
+                        <FontAwesomeIcon icon={faSpotify} style={{
+                          color: '#1DB954', fontSize: '4rem', margin: '1rem'
+                        }} />
                       </div>
                       <h3 style={{ fontWeight: '600', margin: '1rem 0' }}>
                         {spotifyProfile.display_name}
@@ -312,14 +314,14 @@ function HomePage() {
                 padding: '2rem 1.5rem',
                 position: 'relative',
                 overflow: 'hidden',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)'
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                animation: 'pulseGlow 2s infinite',
               }}>
                 <div style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   marginBottom: '1rem',
-                  animation: 'pulseGlow 2s infinite'
                 }}>
                   <span style={{
                     display: 'inline-flex',
@@ -336,7 +338,7 @@ function HomePage() {
                   </span>
                 </div>
                 <Card.Title style={{ fontWeight: 700, fontSize: '1.7rem', color: 'var(--primary-dark)' }}>
-                  🚀 Coming Soon
+                  Coming Soon!!!
                 </Card.Title>
                 <Card.Text style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', margin: '1rem 0' }}>
                   We're working hard to bring you new features and improvements.<br />
@@ -363,7 +365,6 @@ function HomePage() {
 
 export default HomePage;
 
-// Add the keyframes to a style tag at the top level (for global CSS)
 if (typeof document !== 'undefined' && !document.getElementById('gradientBG-keyframes')) {
   const style = document.createElement('style');
   style.id = 'gradientBG-keyframes';
@@ -371,18 +372,6 @@ if (typeof document !== 'undefined' && !document.getElementById('gradientBG-keyf
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
-  }`;
-  document.head.appendChild(style);
-}
-
-// Add the keyframes for the pulseGlow animation
-if (typeof document !== 'undefined' && !document.getElementById('pulseGlow-keyframes')) {
-  const style = document.createElement('style');
-  style.id = 'pulseGlow-keyframes';
-  style.innerHTML = `@keyframes pulseGlow {
-    0% { box-shadow: 0 0 24px 0 #1DB95444, 0 0 0 0 #1DB95433; }
-    70% { box-shadow: 0 0 32px 8px #1DB95433, 0 0 0 0 #1DB95422; }
-    100% { box-shadow: 0 0 24px 0 #1DB95444, 0 0 0 0 #1DB95433; }
   }`;
   document.head.appendChild(style);
 }
