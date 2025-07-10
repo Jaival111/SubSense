@@ -187,7 +187,7 @@ function HomePage() {
         <Row className="mb-5">
           <Col>
             <div style={{
-              background: 'linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-color) 100%)',
+              background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%)',
               borderRadius: 'var(--radius-2xl)',
               padding: 'var(--spacing-3xl)',
               color: 'white',
