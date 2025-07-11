@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchWithAuth } from '../utils/api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faSignInAlt, faUser, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faSignInAlt, faUser, faArrowLeft, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -27,6 +27,10 @@ function LoginPage() {
     const [resetPasswordConfirm, setResetPasswordConfirm] = useState('');
     const [resetLoading, setResetLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    // Add state for validation errors
+    const [forgotEmailError, setForgotEmailError] = useState('');
+    const [forgotPasswordError, setForgotPasswordError] = useState('');
+    const [forgotPasswordConfirmError, setForgotPasswordConfirmError] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -85,7 +89,7 @@ function LoginPage() {
         setForgotError('');
         setForgotSuccess('');
         if (!validateEmail(forgotEmail)) {
-            setForgotError('Please enter a valid email address.');
+            setForgotEmailError('Please enter a valid email address.');
             return;
         }
         setResetLoading(true);
@@ -117,11 +121,11 @@ function LoginPage() {
         setForgotError('');
         setForgotSuccess('');
         if (!resetPassword || !validatePassword(resetPassword)) {
-            setForgotError('Password must be at least 8 characters long and contain at least one letter and one number.');
+            setForgotPasswordError('Password must be at least 8 characters long and contain at least one letter and one number.');
             return;
         }
         if (resetPassword !== resetPasswordConfirm) {
-            setForgotError('Passwords do not match.');
+            setForgotPasswordConfirmError('Passwords do not match.');
             return;
         }
         setResetLoading(true);
@@ -153,8 +157,41 @@ function LoginPage() {
         }
     };
 
+    const handleForgotEmailChange = (e) => {
+        setForgotEmail(e.target.value);
+        if (!validateEmail(e.target.value)) {
+            setForgotEmailError('Please enter a valid email address.');
+        } else {
+            setForgotEmailError('');
+        }
+    };
+
+    const handleResetPasswordChange = (e) => {
+        setResetPassword(e.target.value);
+        if (!validatePassword(e.target.value)) {
+            setForgotPasswordError('Password must be at least 8 characters long and contain at least one letter and one number.');
+        } else {
+            setForgotPasswordError('');
+        }
+        // Also check confirm password
+        if (resetPasswordConfirm && e.target.value !== resetPasswordConfirm) {
+            setForgotPasswordConfirmError('Passwords do not match.');
+        } else {
+            setForgotPasswordConfirmError('');
+        }
+    };
+
+    const handleResetPasswordConfirmChange = (e) => {
+        setResetPasswordConfirm(e.target.value);
+        if (resetPassword !== e.target.value) {
+            setForgotPasswordConfirmError('Passwords do not match.');
+        } else {
+            setForgotPasswordConfirmError('');
+        }
+    };
+
     return (
-        <Container className="d-flex justify-content-center align-items-center fade-in mt-3 mb-3" style={{ minHeight: '80vh' }}>
+        <Container className="d-flex justify-content-center align-items-center fade-in mt-3 mb-3" style={{ position: 'relative', minHeight: '80vh', zIndex: 1 }}>
             <div style={{
                 maxWidth: '450px',
                 width: '100%',
@@ -229,12 +266,18 @@ function LoginPage() {
                                         type="email"
                                         name="forgotEmail"
                                         value={forgotEmail}
-                                        onChange={e => setForgotEmail(e.target.value)}
+                                        onChange={handleForgotEmailChange}
                                         required
                                         placeholder="Enter your email"
                                         disabled={resetLoading}
+                                        isInvalid={!!forgotEmailError}
                                     />
                                 </div>
+                                {forgotEmailError && (
+                                    <div style={{ color: 'var(--danger-color)', fontSize: '0.95rem', marginTop: 4 }}>
+                                        {forgotEmailError}
+                                    </div>
+                                )}
                             </Form.Group>
                         )}
                         {forgotStep === 2 && (
@@ -243,29 +286,79 @@ function LoginPage() {
                                     <Form.Label style={{ fontWeight: '600', color: 'var(--text-primary)', marginBottom: 'var(--spacing-sm)' }}>
                                         New Password
                                     </Form.Label>
-                                    <Form.Control
-                                        type="password"
-                                        name="resetPassword"
-                                        value={resetPassword}
-                                        onChange={e => setResetPassword(e.target.value)}
-                                        required
-                                        placeholder="Enter new password"
-                                        disabled={resetLoading}
-                                    />
+                                    <div className="input-icon-wrapper">
+                                        <span
+                                            onClick={() => setShowPassword((prev) => !prev)}
+                                            style={{
+                                                position: 'absolute',
+                                                left: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                cursor: 'pointer',
+                                                color: 'var(--text-tertiary)',
+                                                zIndex: 2
+                                            }}
+                                            tabIndex={0}
+                                            role="button"
+                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                                        </span>
+                                        <Form.Control
+                                            type="password"
+                                            name="resetPassword"
+                                            value={resetPassword}
+                                            onChange={handleResetPasswordChange}
+                                            required
+                                            placeholder="Enter new password"
+                                            disabled={resetLoading}
+                                            isInvalid={!!forgotPasswordError}
+                                        />
+                                    </div>
+                                    {forgotPasswordError && (
+                                        <div style={{ color: 'var(--danger-color)', fontSize: '0.95rem', marginTop: 4 }}>
+                                            {forgotPasswordError}
+                                        </div>
+                                    )}
                                 </Form.Group>
                                 <Form.Group className="mb-4">
                                     <Form.Label style={{ fontWeight: '600', color: 'var(--text-primary)', marginBottom: 'var(--spacing-sm)' }}>
                                         Confirm New Password
                                     </Form.Label>
-                                    <Form.Control
-                                        type="password"
-                                        name="resetPasswordConfirm"
-                                        value={resetPasswordConfirm}
-                                        onChange={e => setResetPasswordConfirm(e.target.value)}
-                                        required
-                                        placeholder="Confirm new password"
-                                        disabled={resetLoading}
-                                    />
+                                    <div className="input-icon-wrapper">
+                                        <span
+                                            onClick={() => setShowPassword((prev) => !prev)}
+                                            style={{
+                                                position: 'absolute',
+                                                left: '12px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                cursor: 'pointer',
+                                                color: 'var(--text-tertiary)',
+                                                zIndex: 2
+                                            }}
+                                            tabIndex={0}
+                                            role="button"
+                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        >
+                                            <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                                        </span>
+                                        <Form.Control
+                                            type="password"
+                                            name="resetPasswordConfirm"
+                                            value={resetPasswordConfirm}
+                                            onChange={handleResetPasswordConfirmChange}
+                                            required
+                                            placeholder="Confirm new password"
+                                            disabled={resetLoading}
+                                            isInvalid={!!forgotPasswordConfirmError}
+                                        />
+                                    </div>
+                                    {forgotPasswordConfirmError && (
+                                        <div style={{ color: 'var(--danger-color)', fontSize: '0.95rem', marginTop: 4 }}>
+                                            {forgotPasswordConfirmError}
+                                        </div>
+                                    )}
                                 </Form.Group>
                             </>
                         )}
@@ -301,8 +394,8 @@ function LoginPage() {
                             )}
                         </Button>
                         <div className="text-center">
-                            <Button
-                                variant="link"
+                            <a
+                                href='/login'
                                 style={{ color: 'var(--primary-color)', fontWeight: '600', textDecoration: 'none', padding: 0 }}
                                 onClick={() => {
                                     setShowForgotPassword(false);
@@ -313,9 +406,11 @@ function LoginPage() {
                                     setForgotError('');
                                     setForgotSuccess('');
                                 }}
+                                onMouseEnter={(e) => e.target.style.color = 'var(--primary-dark)'}
+                                onMouseLeave={(e) => e.target.style.color = 'var(--primary-color)'}
                             >
                                 <FontAwesomeIcon icon={faArrowLeft} /> Back to Login
-                            </Button>
+                            </a>
                         </div>
                     </Form>
                 ) : (
@@ -392,7 +487,7 @@ function LoginPage() {
                                         <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                                     </span>
                                     <Form.Control
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
@@ -402,10 +497,11 @@ function LoginPage() {
                                 </div>
                             </Form.Group>
                             <div className="mb-4 text-end">
-                                <Button
-                                    variant="link"
-                                    style={{ color: 'var(--primary-color)', fontWeight: '600', textDecoration: 'none', padding: 0 }}
-                                    onClick={() => {
+                                <a
+                                    href="#"
+                                    style={{ color: 'var(--primary-color)', fontWeight: '600', textDecoration: 'none', padding: 0, cursor: 'pointer' }}
+                                    onClick={e => {
+                                        e.preventDefault();
                                         setShowForgotPassword(true);
                                         setForgotStep(1);
                                         setForgotEmail('');
@@ -414,9 +510,11 @@ function LoginPage() {
                                         setForgotError('');
                                         setForgotSuccess('');
                                     }}
+                                    onMouseEnter={(e) => e.target.style.color = 'var(--primary-dark)'}
+                                    onMouseLeave={(e) => e.target.style.color = 'var(--primary-color)'}
                                 >
                                     Forgot Password?
-                                </Button>
+                                </a>
                             </div>
                             <Button
                                 variant="primary"

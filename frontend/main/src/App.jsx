@@ -4,10 +4,12 @@ import NavComponent from './components/Navbar';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ParticlesComponent from './components/ParticlesBackground';
 
 function App() {
   return (
     <AuthProvider>
+      <ParticlesComponent id="particles" />
       <Router>
         <NavComponent />
         <Routes>

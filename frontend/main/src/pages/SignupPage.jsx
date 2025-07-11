@@ -99,7 +99,7 @@ function SignupPage() {
     };
 
     return (
-        <Container className="d-flex justify-content-center align-items-center fade-in mt-3 mb-3" style={{ minHeight: '80vh' }}>
+        <Container className="d-flex justify-content-center align-items-center fade-in mt-3 mb-3" style={{ position: 'relative', minHeight: '80vh', zIndex: 1 }}>
             <div style={{
                 maxWidth: '500px',
                 width: '100%',
@@ -168,7 +168,7 @@ function SignupPage() {
                             color: 'var(--text-primary)',
                             marginBottom: 'var(--spacing-sm)'
                         }}>
-                            Full Name
+                            Name
                         </Form.Label>
                         <div className="input-icon-wrapper">
                             <FontAwesomeIcon icon={faIdCard} className="input-icon" />
@@ -178,7 +178,7 @@ function SignupPage() {
                                 value={formData.name}
                                 onChange={handleChange}
                                 required
-                                placeholder="Enter your full name"
+                                placeholder="Enter your name"
                             />
                         </div>
                     </Form.Group>

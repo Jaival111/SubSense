@@ -12,18 +12,6 @@ import { faLink, faUnlink } from '@fortawesome/free-solid-svg-icons';
 import { faSpotify } from '@fortawesome/free-brands-svg-icons';
 import { faRocket } from '@fortawesome/free-solid-svg-icons';
 
-const gradientStyle = {
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  width: '100vw',
-  height: '100vh',
-  zIndex: -1,
-  background: 'linear-gradient(-45deg, #1DB954, #1e3c72, #2a5298, #f5f7fa)',
-  backgroundSize: '400% 400%',
-  animation: 'gradientBG 15s ease infinite',
-};
-
 function HomePage() {
   const { user, setUser } = useAuth();
   const [spotifyProfile, setSpotifyProfile] = useState(null);
@@ -127,8 +115,6 @@ function HomePage() {
   if (!user) {
     return (
       <>
-        {/* Animated Gradient Background */}
-        <div style={gradientStyle}></div>
         {/* Main Content */}
         <Container className="d-flex justify-content-center align-items-center fade-in mt-5" style={{ minHeight: '80vh' }}>
           <Card className="welcome-card text-center" style={{
@@ -179,22 +165,20 @@ function HomePage() {
 
   return (
     <>
-      {/* Animated Gradient Background */}
-      <div style={gradientStyle}></div>
       {/* Main Content */}
       <Container className="py-5 fade-in">
         {/* Welcome Section */}
         <Row className="mb-5">
           <Col>
             <div style={{
-              background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%)',
+              background: 'transparent',
               borderRadius: 'var(--radius-2xl)',
               padding: 'var(--spacing-3xl)',
               color: 'white',
               textAlign: 'center'
             }}>
               <h1 className="mb-3" style={{ fontWeight: '700', color: 'white' }}>
-                Welcome back, {user.name}!👋
+                Welcome back, <span style={{ fontFamily: 'Jaro' }}>{user.name}</span>!👋
               </h1>
               <p style={{ fontSize: '1.1rem', opacity: 0.9, marginBottom: 0, color: 'white' }}>
                 Manage your subscriptions and track your spending with ease
@@ -364,14 +348,3 @@ function HomePage() {
 }
 
 export default HomePage;
-
-if (typeof document !== 'undefined' && !document.getElementById('gradientBG-keyframes')) {
-  const style = document.createElement('style');
-  style.id = 'gradientBG-keyframes';
-  style.innerHTML = `@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }`;
-  document.head.appendChild(style);
-}
