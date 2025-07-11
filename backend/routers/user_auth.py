@@ -60,7 +60,7 @@ def validate_email(email: schemas.ValidateEmail, db: db_dependency):
         raise HTTPException(status_code=404, detail="User not found")
     return {"email": email.email}
 
-@router.post("/reset-password", response_model=schemas.PasswordReset)
+@router.post("/reset-password", response_model=schemas.UserResponse)
 def reset_password(user: schemas.PasswordReset, db: db_dependency):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if not db_user:

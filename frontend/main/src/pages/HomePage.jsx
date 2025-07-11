@@ -166,7 +166,7 @@ function HomePage() {
   return (
     <>
       {/* Main Content */}
-      <Container className="py-5 fade-in">
+      <Container className="py-5 fade-in" style={{ position: 'relative', zIndex: 1 }}>
         {/* Welcome Section */}
         <Row className="mb-5">
           <Col>

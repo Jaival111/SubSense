@@ -305,7 +305,7 @@ function LoginPage() {
                                             <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                                         </span>
                                         <Form.Control
-                                            type="password"
+                                            type={showPassword ? 'text' : 'password'}
                                             name="resetPassword"
                                             value={resetPassword}
                                             onChange={handleResetPasswordChange}
@@ -344,7 +344,7 @@ function LoginPage() {
                                             <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                                         </span>
                                         <Form.Control
-                                            type="password"
+                                            type={showPassword ? 'text' : 'password'}
                                             name="resetPasswordConfirm"
                                             value={resetPasswordConfirm}
                                             onChange={handleResetPasswordConfirmChange}
