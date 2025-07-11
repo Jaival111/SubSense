@@ -23,6 +23,13 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class ValidateEmail(BaseModel):
+    email: EmailStr
+
+class PasswordReset(BaseModel):
+    email: EmailStr
+    new_password: str
+
 class SubscriptionCreate(BaseModel):
     app_name: str
     cost: float

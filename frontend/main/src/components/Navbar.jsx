@@ -85,25 +85,23 @@ function NavComponent() {
                 
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto">
-                        {!user && (
-                            <Nav.Link 
-                                href="/" 
-                                className="nav-link-modern"
-                                style={{
-                                    color: 'var(--text-secondary)',
-                                    fontWeight: '500',
-                                    padding: 'var(--spacing-sm) var(--spacing-md)',
-                                    borderRadius: 'var(--radius-md)',
-                                    transition: 'all var(--transition-fast)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 'var(--spacing-sm)'
-                                }}
-                            >
-                                <FontAwesomeIcon icon={faHome} />
-                                Home
-                            </Nav.Link>
-                        )}
+                        <Nav.Link 
+                            href="/" 
+                            className="nav-link-modern"
+                            style={{
+                                color: 'var(--text-secondary)',
+                                fontWeight: '500',
+                                padding: 'var(--spacing-sm) var(--spacing-md)',
+                                borderRadius: 'var(--radius-md)',
+                                transition: 'all var(--transition-fast)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--spacing-sm)'
+                            }}
+                        >
+                            <FontAwesomeIcon icon={faHome} />
+                            Home
+                        </Nav.Link>
                     </Nav>
                     
                     <Nav className="nav-right">

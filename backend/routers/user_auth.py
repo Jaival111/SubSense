@@ -53,3 +53,20 @@ def list_users(db: db_dependency):
     users = db.query(models.User).all()
     return users
 
+@router.post("/validate-email", response_model=schemas.ValidateEmail)
+def validate_email(email: schemas.ValidateEmail, db: db_dependency):
+    user = db.query(models.User).filter(models.User.email == email.email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"email": email.email}
+
+@router.post("/reset-password", response_model=schemas.PasswordReset)
+def reset_password(user: schemas.PasswordReset, db: db_dependency):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    db_user.password = user.new_password
+    db.commit()
+    db.refresh(db_user)
+
+    return db_user
