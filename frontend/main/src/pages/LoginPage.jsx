@@ -130,7 +130,6 @@ function LoginPage() {
         }
         setResetLoading(true);
         try {
-            // Call backend to reset password
             const response = await fetchWithAuth('/reset-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -173,7 +172,6 @@ function LoginPage() {
         } else {
             setForgotPasswordError('');
         }
-        // Also check confirm password
         if (resetPasswordConfirm && e.target.value !== resetPasswordConfirm) {
             setForgotPasswordConfirmError('Passwords do not match.');
         } else {
@@ -224,7 +222,7 @@ function LoginPage() {
                         fontSize: '2rem',
                         marginBottom: 'var(--spacing-sm)'
                     }}>
-                        {showForgotPassword ? 'Forgot Password' : 'Welcome Back!'}
+                        {showForgotPassword ? 'Forgot Password' : 'Welcome!'}
                     </h1>
                     <p style={{
                         color: 'var(--text-secondary)',

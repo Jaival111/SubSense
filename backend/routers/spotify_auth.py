@@ -91,7 +91,6 @@ def login(token: str):
     if not token:
         raise HTTPException(status_code=401, detail="Missing token")
     
-    # Encode the token in base64 to pass via `state`
     encoded_state = base64.urlsafe_b64encode(token.encode()).decode()
     scope = "user-read-private user-read-email user-read-recently-played"
 
@@ -113,19 +112,16 @@ async def callback(request: Request, db: db_dependency):
         raise HTTPException(status_code=400, detail="Missing code or state")
 
     try:
-        # Decode JWT from base64-encoded state
         jwt_token = base64.urlsafe_b64decode(encoded_state.encode()).decode()
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid state parameter")
 
-    # Manually call your JWT decoder function (from auth.py)
     try:
         payload = auth.decode_access_token(jwt_token)  # should return {"sub": email}
         user_email = payload.get("sub")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # Fetch user from DB
     current_user = db.query(models.User).filter(models.User.email == user_email).first()
     if not current_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -224,16 +220,10 @@ async def connect_with_subscription(
     db: db_dependency,
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """
-    Connect to Spotify and create a subscription in one request.
-    This endpoint expects a POST request with subscription data.
-    """
-    # First, check if user is already connected to Spotify
     if not current_user.spotify_access_token:
         raise HTTPException(status_code=400, detail="Please connect to Spotify first")
     
     try:
-        # Parse dates from ISO format
         start_date = datetime.fromisoformat(subscription_data.get("start_date")).date()
         next_billing_date = datetime.fromisoformat(subscription_data.get("next_billing_date")).date()
 

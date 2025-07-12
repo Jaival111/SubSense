@@ -177,10 +177,10 @@ function HomePage() {
               color: 'white',
               textAlign: 'center'
             }}>
-              <h1 className="mb-3" style={{ fontWeight: '700', color: 'white' }}>
-                Welcome back, <span style={{ fontFamily: 'Jaro' }}>{user.name}</span>!👋
+              <h1 className="mb-3" style={{ fontWeight: '700', color: 'white', fontSize: '4rem' }}>
+                Welcome, <span style={{ fontFamily: 'Jaro' }}>{user.name}</span>!👋
               </h1>
-              <p style={{ fontSize: '1.1rem', opacity: 0.9, marginBottom: 0, color: 'white' }}>
+              <p style={{ fontSize: '1.5rem', opacity: 0.9, marginBottom: 0, color: 'white' }}>
                 Manage your subscriptions and track your spending with ease
               </p>
             </div>
@@ -220,14 +220,14 @@ function HomePage() {
                     <div className='d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0'>
                       <div>
                         <FontAwesomeIcon icon={faSpotify} style={{
-                          color: '#1DB954', fontSize: '4rem', margin: '1rem'
+                          color: '#1DB954', fontSize: '5rem', margin: '1rem'
                         }} />
                       </div>
                       <div className='text-center text-md-start'>
                         <Card.Title style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600' }}>
                           Connect Your Spotify Account
                         </Card.Title>
-                        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+                        <p style={{ fontSize: '1.2rem', margin: 0, color: 'var(--text-secondary)' }}>
                           Link your Spotify account to manage your subscription and track your listening activity
                         </p>
                       </div>
@@ -255,10 +255,10 @@ function HomePage() {
                     <div className='d-flex align-items-center justify-content-center mb-3 mb-md-0'>
                       <div>
                         <FontAwesomeIcon icon={faSpotify} style={{
-                          color: '#1DB954', fontSize: '4rem', margin: '1rem'
+                          color: '#1DB954', fontSize: '5rem', margin: '1rem'
                         }} />
                       </div>
-                      <h3 style={{ fontWeight: '600', margin: '1rem 0' }}>
+                      <h3 style={{ fontWeight: '600', margin: '1rem 0', fontSize: '2.3rem' }}>
                         {spotifyProfile.display_name}
                       </h3>
                     </div>
@@ -324,7 +324,7 @@ function HomePage() {
                 <Card.Title style={{ fontWeight: 700, fontSize: '1.7rem', color: 'var(--primary-dark)' }}>
                   Coming Soon!!!
                 </Card.Title>
-                <Card.Text style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', margin: '1rem 0' }}>
+                <Card.Text style={{ color: 'var(--text-secondary)', fontSize: '1.2rem', margin: '1rem 0' }}>
                   We're working hard to bring you new features and improvements.<br />
                   Exciting updates are on the way to help you manage your subscriptions even better!
                 </Card.Text>
