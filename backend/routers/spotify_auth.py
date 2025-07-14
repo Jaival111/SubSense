@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import urllib.parse
 from models import BillingCycle
+import statistics
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -268,13 +269,45 @@ async def renew_subscription(email: str, db: db_dependency):
     subscription.should_omit = False
     db.commit()
     return RedirectResponse("https://subsense.vercel.app")
-    
+
+
+def get_recommendation(email: str):
+    db: Session = SessionLocal()
+    try:
+        user = db.query(models.User).filter(models.User.email == email).first()
+        subscription = db.query(models.Subscription).filter_by(user_id=user.id, app_name="Spotify").first()
+        app_usage = db.query(models.AppUsageStats).filter_by(user_id=user.id, subscription_id=subscription.id, app_name="Spotify").all()
+        total_days = (subscription.next_billing_date - subscription.start_date).days
+        total_active_days = sum([usage.is_active for usage in app_usage])
+        active_percentage = (total_active_days / total_days) * 100
+        total_usage_values = [usage.total_usage for usage in app_usage]
+        if len(total_usage_values) >= 2:
+            usage_consistancy_score = statistics.stdev(total_usage_values)
+        else:
+            usage_consistancy_score = 0.0
+        
+        if active_percentage < 30:
+            if usage_consistancy_score < 15:
+                return "omit"
+            else:
+                return "keep" # inconcistent usage, but active enough to keep
+        elif active_percentage >= 60:
+            return "keep"
+        elif active_percentage >= 40 and usage_consistancy_score < 30:
+            return "keep"
+        else:
+            return "keep" # inconcistent usage, but active enough to keep
+    finally:
+        db.close()
+
 
 def send_renewal_email(user_email, user_name=None):
+    status = get_recommendation(user_email)
     link = f"{RENEW_SUB_URL}?email={user_email}"
     body = f"""
     Hi{f' {user_name}' if user_name else ''},<br><br>
     Your Spotify subscription is due for renewal today.<br>
+    Based on your usage, we recommend you to <strong>{status}</strong> this subscription.<br><br>
     If you wish to continue using Spotify with our service, please <a href='{link}'>reconnect your Spotify account</a>.<br><br>
     If you do not reconnect, your Spotify integration will remain disconnected.<br><br>
     Thank you!<br>
