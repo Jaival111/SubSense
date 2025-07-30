@@ -74,7 +74,7 @@ function NavComponent() {
                     }} />
                 </Navbar.Brand>
                 
-                <Navbar.Toggle 
+                {/* <Navbar.Toggle 
                     aria-controls="basic-navbar-nav" 
                     style={{
                         border: 'none',
@@ -206,7 +206,7 @@ function NavComponent() {
                             </div>
                         )}
                     </Nav>
-                </Navbar.Collapse>
+                </Navbar.Collapse> */}
             </Container>
         </Navbar>
     );

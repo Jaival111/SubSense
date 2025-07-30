@@ -136,12 +136,12 @@ function HomePage() {
                 margin: '0 auto var(--spacing-xl)',
               }} />
               <h1 className="mb-3" style={{ color: 'var(--text-primary)', fontWeight: '700' }}>
-                Welcome to <span style={{ color: 'var(--primary-dark)' }}>SubSense</span>
+                <span style={{ color: 'var(--primary-dark)' }}>SubSense</span> has signed off!
               </h1>
               <p className="lead mb-4" style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
-                Your intelligent subscription management platform - Where you can save money effortlessly by simply linking your apps. Based on your usage, we’ll suggest whether a subscription is really worth keeping
+                I gave it my best shot, but sometimes things don’t go as planned. SubSense is now closed.<br/>Thanks to everyone who checked it out.<br/>- Jaival Chauhan
               </p>
-              <Button
+              {/* <Button
                 href="/login"
                 variant="primary"
                 size="lg"
@@ -155,7 +155,7 @@ function HomePage() {
                 }}
               >
                 Get Started
-              </Button>
+              </Button> */}
             </Card.Body>
           </Card>
         </Container>
